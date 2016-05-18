@@ -220,9 +220,20 @@ this is on purpose.
 Also, if every command has a short help string, it gets a little unreadable.
 */
 
+#include <map>
+struct Value { char* string;  };
+struct Option { bool stuff; operator bool(); Value& operator[](const char*); };
+typedef std::map<char*, Option> Parsed;
+Parsed& cmdline(char* desc, int argc, char* argv[]);
+void print_version();
+
 void test(int argc, char* argv[])
 {
 	auto options = cmdline(opt, argc, argv);
 	if (options["version"]) { print_version(); }
-	if (options["C"]) { auto path = options["C"]["path"].string; if (path != nullptr) printf("C path = %s\n", path); }
+	if (options["C"])
+	{
+		auto path = options["C"]["path"].string;
+		if (path != nullptr) printf("C path = %s\n", path);
+	}
 }
