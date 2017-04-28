@@ -5,7 +5,7 @@ project 'cmdline'
 
     files
     {
-        '**.cpp',
+        '**.cpp', '**.h',
         '../include/**.h'
     }
 
