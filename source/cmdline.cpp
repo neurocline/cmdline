@@ -49,6 +49,10 @@ OPTION   ::= '[' OPTNAME ']' TEXT
 ARGUMENT ::= '<' ARGNAME '>' TEXT
 TEXT     ::= | <string>
 
+CMDLINE  ::= (TEXT | OPTION)*
+TEXT     ::= <string>
+OPTION   ::= '[' OPTBODY ']' SP SP+ TEXT*
+OPTBODY  ::= OPTNAME ('=' OPTARG)?
 */
 
 namespace cmdline
