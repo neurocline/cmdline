@@ -2,8 +2,6 @@
 // cmdline.cpp
 //=============================================================================================
 
-#define _CRT_SECURE_NO_WARNINGS
-
 #include "cmdline.h"
 
 cmdline::Cmdline::Cmdline(const char* desc)

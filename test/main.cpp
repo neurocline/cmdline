@@ -4,7 +4,7 @@
 
 #include <stdio.h>
 
-#include "cmdline.h"
+#include "cmdline/cmdline.h"
 
 #define PROGRAM_VERSION "1.0"
 
