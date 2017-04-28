@@ -6,8 +6,12 @@ project 'cmdline'
     files
     {
         '**.cpp', '**.h',
-        '../include/**.h'
+        '../include/**.h',
+        '../v0/**',
     }
+
+    filter { 'files:../v0/**'}
+        flags { 'ExcludeFromBuild' }
 
     -- for Visual Studio, include the version number in the project name
     filter { 'action:vs*' }
