@@ -147,3 +147,36 @@ synonyms point to their Value.
 This creates unneeded duplication for postional parameters, which can't have synonyms as far
 as I can tell, but since command-lines typically have 10x the named parameters compared to
 positional parameters, this isn't worth worrying about.
+
+Named parameters with values
+----------------------------
+
+It's common for named parameters to take values, and not just be booleans. Returning to `git clone`,
+we want to say this:
+
+```
+usage: git clone [<options>] [--] <repo> [<dir>]
+
+    -j, --jobs <n>        number of submodules cloned in parallel
+    --reference <repo>    reference repository
+```
+
+When we have synonyms, we expect each synonym to take the same parameter, so it's reasonable
+to not need to name it twice.
+
+At first, we're just going to ignore the name we assign to the value of the named parameter.
+What we will do is mark this value as requiring a parameter - this is so that we know to
+consume a token from the command-line when we parse the actual command-line arguments.
+
+When parsing command-line arguments, we want to support both styles of named parameter arguments:
+
+```
+git-clone -j 2
+git-glone -j=2
+```
+
+The equal sign is optional and implied.
+
+Note that on Windows, arguments are split by whitespace only, so `git-clone j=2` has `argc` of 2,
+whereas `git-clone j 2` has `argc` of 3. Handling of `=` to split parameters has to be handled
+inside the parsing of the `argv` array.

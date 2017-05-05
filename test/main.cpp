@@ -30,6 +30,8 @@ void PrintArgs(int argc, char* argv[])
 
 // ------------------------------------------------------------------------------------------------
 
+#if 0
+
 // Build and exercise a command-line that takes no parameters
 //void CmdZeroParms()
 AUTO_REGISTER(CmdZeroParms)
@@ -173,3 +175,5 @@ optional arguments:
     else
         printf("-a=%s\n", cmd["a"].string());
 }
+
+#endif

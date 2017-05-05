@@ -65,7 +65,8 @@ void Cmdline::eval(int argc, char** argv)
     // offset in the command line
 
     int positional = 0;
-    for (int i = 1; i < argc; i++)
+    int i = 1; // first arg is always program name
+    for (; i < argc; i++)
     {
         // If this is a positional argument, find and assign it
         if (argv[i][0] != '-')
@@ -78,7 +79,9 @@ void Cmdline::eval(int argc, char** argv)
             positional++;
         }
 
-        // Otherwise, it must be a named argument
+        // Otherwise, it must be a named argument. This could be a --option=value
+        // or --option value; only arguments that can take values allow them.
+        // TBD we don't handle --option=value yet
         else
         {
             char* opt = argv[i];
@@ -88,8 +91,24 @@ void Cmdline::eval(int argc, char** argv)
             if (pos == options.end())
                 break; // this is a bad argument
 
-            // TBD all the kinds of named
-            pos->second->set("True");
+            // If this argument consumes values, then get them
+            // TBD we just handle one value at the moment
+            if (pos->second->nargs() > 0)
+            {
+                int n = pos->second->nargs();
+                for (; n > 0; n--)
+                {
+                    i += 1;
+                    if (i >= argc)
+                        break; // syntax error
+                    auto val = argv[i];
+                    pos->second->set(val);
+                }
+            }
+
+            // If it takes no args, it's a boolean
+            else
+                pos->second->set("True");
         }
     }
 }
@@ -149,7 +168,7 @@ internal::Parser::Parser(const char* text, const char* textEnd, Cmdline* cmd_)
 //  TEXT ::= string+
 //  POSITIONAL ::= ^ '<' ARGUMENT '>' TEXT
 //  NAMEDLIST ::= NAMED (',' NAMED)*
-//  NAMED ::= '-' '-'? ARGUMENT
+//  NAMED ::= '-' '-'? ARGUMENT ('='? VALUE)?
 //  ARGUMENT ::= string+
 
 bool internal::Parser::parse()
@@ -293,9 +312,36 @@ bool internal::Parser::NAMED(int& pos, Fragment& f, Value*& v)
     if (!ARGUMENT(p, f))
         return false;
 
-    // We now have a named argument. The simple version is bool-if-exists
+    // Consume optional VALUEs
+    int narg = 0;
+    while (p < textEnd - text)
+    {
+        int argpos{ p };
+        Fragment farg;
+
+        ConsumeWhitespace(argpos);
+        MatchChar(argpos, '='); // optional
+
+        if (!MatchChar(argpos, '<'))
+            break;
+        if (!ARGUMENT(argpos, farg))
+            break;
+        narg += 1;
+        if (!MatchChar(argpos, '>'))
+            break;
+
+        p = argpos;
+    }
+
+    // We now have a named argument. The simple version is bool-if-exists, or
+    // an argument count if it takes further arguments
     if (v == nullptr)
+    {
         v = new Value("False", false);
+        cmd->values.push_back(v);
+    }
+    if (narg > 0)
+        v->nargs(narg);
 
     std::string arg(f.b, f.e - f.b);
     cmd->options[arg] = v;

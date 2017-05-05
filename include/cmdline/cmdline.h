@@ -14,18 +14,20 @@ namespace cmdline
 class Value
 {
 public:
-    Value() : str(nullptr), valid(false) {}
-    Value(char* str_) : str(str_), valid(true) {}
-    Value(char* str_, bool f_) : str(str_), valid(f_) {}
+    Value() : str(nullptr), valid(false), num_args(0) {}
+    Value(char* str_) : str(str_), valid(true), num_args(0) {}
+    Value(char* str_, bool f_) : str(str_), valid(f_), num_args(0) {}
     ~Value() {}
 
     const char* string() const { return str; }
     bool exists() const { return valid; }
+    int nargs(int n = -1) { if (n >= 0) num_args = n; return num_args; }
 
     void set(const char* s) { str = s; valid = true; }
 private:
 	const char* str;
     bool valid;
+    int num_args; // number of arguments consumed
 };
 
 class Cmdline
