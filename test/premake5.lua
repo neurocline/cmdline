@@ -1,6 +1,11 @@
-project "test-cmdline"
-    kind "ConsoleApp"
+project 'test-cmdline'
+    kind 'ConsoleApp'
 
-    includedirs { "../include" }
-    files { "*.h", "*.cpp" }
-    links { "cmdline" }
+    includedirs { '../include' }
+    files { '*.cpp', '*.h' }
+    links { 'cmdline' }
+
+    includedependencies
+    {
+        'bf',
+    }
