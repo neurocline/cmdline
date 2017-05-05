@@ -14,8 +14,9 @@ namespace cmdline
 class Value
 {
 public:
-    Value() : str(nullptr) { valid = true; }
-    Value(char* str_) : str(str_) {}
+    Value() : str(nullptr), valid(false) {}
+    Value(char* str_) : str(str_), valid(true) {}
+    Value(char* str_, bool f_) : str(str_), valid(f_) {}
     ~Value() {}
 
     const char* string() const { return str; }

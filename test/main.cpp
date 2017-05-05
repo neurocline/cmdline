@@ -117,3 +117,59 @@ positional arguments:
 
     printf("\n");
 }
+
+// Build and exercise a command-line that takes a single
+// named parameter
+AUTO_REGISTER(CmdSingleNamedParameter)
+{
+    printf("-------------------------------------------\n");
+    printf("CmdSingleNamedParameter\n");
+	int argc = 2;
+	char* argv[] = { "ls", "-a"};
+    PrintArgs(argc, argv);
+
+	cmdline::Cmdline cmd(argc, argv, R"raw(
+usage: ls [-a]
+    Show directory listing
+
+optional arguments:
+  -a    show all files, including hidden
+)raw");
+
+    printf("\n");
+    printf("Usage message\n");
+    puts(cmd.usage().c_str());
+
+    if (!cmd["a"].exists())
+        printf("Optional parameter '-a' missing\n");
+    else
+        printf("-a=%s\n", cmd["a"].string());
+}
+
+// Build and exercise a command-line that takes a single
+// named parameter
+AUTO_REGISTER(CmdSingleNamedParameterMissing)
+{
+    printf("-------------------------------------------\n");
+    printf("CmdSingleNamedParameterMissing\n");
+	int argc = 1;
+	char* argv[] = { "ls"};
+    PrintArgs(argc, argv);
+
+	cmdline::Cmdline cmd(argc, argv, R"raw(
+usage: ls [-a]
+    Show directory listing
+
+optional arguments:
+  -a    show all files, including hidden
+)raw");
+
+    printf("\n");
+    printf("Usage message\n");
+    puts(cmd.usage().c_str());
+
+    if (!cmd["a"].exists())
+        printf("Optional parameter '-a' missing\n");
+    else
+        printf("-a=%s\n", cmd["a"].string());
+}

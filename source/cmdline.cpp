@@ -78,6 +78,17 @@ void Cmdline::eval(int argc, char** argv)
         }
 
         // Otherwise, it must be a named argument
+        {
+            char* opt = argv[i];
+            if (*opt == '-') opt++;
+            if (*opt == '-') opt++;
+            auto pos = options.find(opt);
+            if (pos == options.end())
+                break; // this is a bad argument
+
+            // TBD all the kinds of named
+            pos->second = Value("True");
+        }
     }
 }
 
@@ -107,6 +118,7 @@ private:
     bool TEXT(int& pos, Fragment& f);
     bool POSITIONAL(int& pos, Fragment& f);
     bool ARGUMENT(int& pos, Fragment& f);
+    bool NAMED(int& pos, Fragment& f);
 
     bool MatchChar(int& pos, char c);
 
@@ -130,9 +142,10 @@ internal::Parser::Parser(const char* text, const char* textEnd, Cmdline* cmd_)
 // ------------------------------------------------------------------------------------------------
 
 // Grammar is something like this (where ^ means line start)
-//  CMDLINE ::= (TEXT | POSITIONAL)
+//  CMDLINE ::= (TEXT | POSITIONAL | NAMED)
 //  TEXT ::= string+
 //  POSITIONAL ::= ^ '<' ARGUMENT '>' TEXT
+//  NAMED ::= '-' '-'? ARGUMENT
 //  ARGUMENT ::= string+
 
 bool internal::Parser::parse()
@@ -146,6 +159,9 @@ bool internal::Parser::parse()
             continue;
 
         if (POSITIONAL(pos, f))
+            continue;
+
+        if (NAMED(pos, f))
             continue;
 
         // syntax error
@@ -178,7 +194,7 @@ bool internal::Parser::TEXT(int& pos, Fragment& f)
         }
 
         // Is this a symbol that terminates text mode?
-        if (linestart && (*e == '<' || *e == '['))
+        if (linestart && (*e == '<' || *e == '[' || *e == '-'))
             break;
 
         // See if we are no longer at the "start" of a line
@@ -224,6 +240,28 @@ bool internal::Parser::POSITIONAL(int& pos, Fragment& f)
     return true;
 }
 
+// Consume a complete NAMED nonterminal or consume nothing
+bool internal::Parser::NAMED(int& pos, Fragment& f)
+{
+    int p{ pos };
+
+    // Consume the beginning
+    if (!MatchChar(p, '-'))
+        return false;
+    MatchChar(p, '-');
+
+    // Consume an ARGUMENT
+    if (!ARGUMENT(p, f))
+        return false;
+
+    // We now have a named argument. The simple version is bool-if-exists
+    std::string arg(f.b, f.e - f.b);
+    cmd->options[arg] = Value("False", false);
+
+    pos = p;
+    return true;
+}
+
 // Consume an ARGUMENT non-terminal. For now, this is just a name, e.g. anything up
 // a non-argument character
 bool internal::Parser::ARGUMENT(int& pos, Fragment& f)
@@ -233,7 +271,7 @@ bool internal::Parser::ARGUMENT(int& pos, Fragment& f)
     const char* e = b;
     for (; e < textEnd; e++)
     {
-        if (*e == ']' || *e == '>')
+        if (*e == ']' || *e == '>' || *e == ' ' || *e == '\n')
             break;
     }
     pos = e - text;
