@@ -97,7 +97,7 @@ reasons
 We'll ignore all of that for now. Multiple positional parameters are fine, each one has a
 unique name, no lists.
 
-One named parameter
+Boolean named parameter
 -------------------
 
 The convention is that positional parameters are usually not optional, and named parameters
@@ -114,3 +114,36 @@ optional arguments:
 In this case, there are two optional named parameters. One is named `a`, and the other is
 named `l`. Neither parameter takes a value; if the paramter is present, this means `true`,
 if the parameter is not present, it means `false`.
+
+Synonyms for named parameters
+-----------------------------
+
+The move to long option names was a good one - it's hard to keep 20 different single-character
+option names straight, especially when it's a command you don't use all the time. However,
+long names are descriptive but take time to type and read, so a convention developed
+where the most common options had both long names and short names.
+
+We could declare these as separate options, but that's redundant when reading help.
+Instead, we want to specify all the pseudonyms on a single line.
+
+```
+usage: git clone [<options>] [--] <repository> [<directory>]
+
+    <repository>       location of upstream repo
+    <directory>        local directory to clone into (default to ./<repo-name>)
+
+    -v, --verbose      be more verbose
+    -q, --quiet        be more quiet
+    --progress         force progress reporting
+    -n, --no-checkout  don't create a checkout
+    ...
+```
+
+This is not as simple as it seems. The set of synonyms all need to point to the same value;
+if we have `-v` on the command line, then `cmd["verbose"]` should be true as well as `cmd["v"]`.
+So this means we have a layer of indirection - there are a set of Values, and then specific
+synonyms point to their Value.
+
+This creates unneeded duplication for postional parameters, which can't have synonyms as far
+as I can tell, but since command-lines typically have 10x the named parameters compared to
+positional parameters, this isn't worth worrying about.

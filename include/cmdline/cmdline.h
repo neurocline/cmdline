@@ -20,7 +20,9 @@ public:
     ~Value() {}
 
     const char* string() const { return str; }
-    bool exists() const { return valid; /*return str != nullptr;*/ }
+    bool exists() const { return valid; }
+
+    void set(const char* s) { str = s; valid = true; }
 private:
 	const char* str;
     bool valid;
@@ -51,13 +53,17 @@ public:
 
     // This is our list of all command-line options, and their parsed values.
     // TBD replace heavyweight std::string with interned strings?
-    std::map<std::string, Value> options;
+    std::map<std::string, Value*> options;
+
+    // This is the list of values, held separately because two options can
+    // point to the same value
+    std::vector<Value*> values;
 
     // This is the ordered list of position arguments
     std::vector<std::string> positionals;
 
-    // This is the default empty value - all options point to it at spec parse time,
-    // then are updated with actual values (if any).
+    // This is the default empty value, currently only used when operator[] can't find
+    // an entry
 	Value noValue;
 };
 

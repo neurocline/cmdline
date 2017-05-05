@@ -33,6 +33,8 @@ Cmdline::Cmdline(int argc, char** argv, char* spec_) : spec(spec_)
 
 Cmdline::~Cmdline()
 {
+    for (auto v : values)
+        delete v;
 }
 
 const std::string& Cmdline::usage()
@@ -52,7 +54,7 @@ const cmdline::Value& cmdline::Cmdline::operator[](const char* option)
 	if (pos == options.end())
 		return noValue;
 
-	return pos->second;
+	return *(pos->second);
 }
 
 //=================================================================================================
@@ -72,12 +74,12 @@ void Cmdline::eval(int argc, char** argv)
             if (pos == options.end())
                 break; // this is a bad argument
 
-            Value v(argv[i]);
-            pos->second = v;
+            pos->second->set(argv[i]);
             positional++;
         }
 
         // Otherwise, it must be a named argument
+        else
         {
             char* opt = argv[i];
             if (*opt == '-') opt++;
@@ -87,7 +89,7 @@ void Cmdline::eval(int argc, char** argv)
                 break; // this is a bad argument
 
             // TBD all the kinds of named
-            pos->second = Value("True");
+            pos->second->set("True");
         }
     }
 }
@@ -118,7 +120,8 @@ private:
     bool TEXT(int& pos, Fragment& f);
     bool POSITIONAL(int& pos, Fragment& f);
     bool ARGUMENT(int& pos, Fragment& f);
-    bool NAMED(int& pos, Fragment& f);
+    bool NAMED(int& pos, Fragment& f, Value*& v);
+    bool NAMEDLIST(int& pos, Fragment& f);
 
     bool MatchChar(int& pos, char c);
 
@@ -142,9 +145,10 @@ internal::Parser::Parser(const char* text, const char* textEnd, Cmdline* cmd_)
 // ------------------------------------------------------------------------------------------------
 
 // Grammar is something like this (where ^ means line start)
-//  CMDLINE ::= (TEXT | POSITIONAL | NAMED)
+//  CMDLINE ::= (TEXT | POSITIONAL | NAMEDLIST)
 //  TEXT ::= string+
 //  POSITIONAL ::= ^ '<' ARGUMENT '>' TEXT
+//  NAMEDLIST ::= NAMED (',' NAMED)*
 //  NAMED ::= '-' '-'? ARGUMENT
 //  ARGUMENT ::= string+
 
@@ -152,7 +156,7 @@ bool internal::Parser::parse()
 {
     int pos = 0;
 
-    for (;;)
+    for (; pos < textEnd - text; )
     {
 	    Fragment f;
         if (TEXT(pos, f))
@@ -161,7 +165,7 @@ bool internal::Parser::parse()
         if (POSITIONAL(pos, f))
             continue;
 
-        if (NAMED(pos, f))
+        if (NAMEDLIST(pos, f))
             continue;
 
         // syntax error
@@ -233,15 +237,50 @@ bool internal::Parser::POSITIONAL(int& pos, Fragment& f)
 
     // At this point, we have all the pieces for a new positional argument
     std::string arg(f.b, f.e - f.b); // TBD force to lower case?
-    cmd->options[arg] = cmd->noValue; // do this some other way
+    auto v = new Value;
+    cmd->values.push_back(v);
+    cmd->options[arg] = v;
     cmd->positionals.push_back(arg);
 
     pos = p;
     return true;
 }
 
+// ------------------------------------------------------------------------------------------------
+
+bool internal::Parser::NAMEDLIST(int& pos, Fragment& f)
+{
+    int p{ pos };
+
+    // We share the same Value among all the synonyms, and we
+    // use the first one created
+    Value* v = nullptr;
+
+    // there must be at least one NAMED to start with
+    if (!NAMED(p, f, v))
+        return false;
+
+    // We can have zero or more NAMED following this. Since we are still
+    // expecting a NAMED, reset the SOL marker too.
+    int pstart{ p };
+    for (;;)
+    {
+        ConsumeWhitespace(p);
+        if (!MatchChar(p, ','))
+            break;
+        ConsumeWhitespace(p);
+        if (!NAMED(p, f, v))
+            break;
+        pstart = p; // we successfully found another token
+    }
+    p = pstart;
+
+    pos = p;
+    return true;
+}
+
 // Consume a complete NAMED nonterminal or consume nothing
-bool internal::Parser::NAMED(int& pos, Fragment& f)
+bool internal::Parser::NAMED(int& pos, Fragment& f, Value*& v)
 {
     int p{ pos };
 
@@ -255,12 +294,17 @@ bool internal::Parser::NAMED(int& pos, Fragment& f)
         return false;
 
     // We now have a named argument. The simple version is bool-if-exists
+    if (v == nullptr)
+        v = new Value("False", false);
+
     std::string arg(f.b, f.e - f.b);
-    cmd->options[arg] = Value("False", false);
+    cmd->options[arg] = v;
 
     pos = p;
     return true;
 }
+
+// ------------------------------------------------------------------------------------------------
 
 // Consume an ARGUMENT non-terminal. For now, this is just a name, e.g. anything up
 // a non-argument character
@@ -271,7 +315,7 @@ bool internal::Parser::ARGUMENT(int& pos, Fragment& f)
     const char* e = b;
     for (; e < textEnd; e++)
     {
-        if (*e == ']' || *e == '>' || *e == ' ' || *e == '\n')
+        if (*e == ']' || *e == '>' || *e == ' ' || *e == '\n' || *e == ',')
             break;
     }
     pos = e - text;
