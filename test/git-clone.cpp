@@ -13,7 +13,7 @@ AUTO_REGISTER(GitClonePartial)
     PrintArgs(argc, argv);
 
 	cmdline::Cmdline cmd(argc, argv, R"raw(
-usage: git clone [<options>] [--] <repository> [<directory>]
+usage: git clone [<options>] [--] <repo> [<dir>]
 
     <repository>          location of upstream repo
     <directory>           local directory to clone into (default to ./<repo-name>)
@@ -50,13 +50,16 @@ usage: git clone [<options>] [--] <repository> [<directory>]
     --shallow-submodules  any cloned submodules will be shallow
     --separate-git-dir <gitdir>
                           separate git dir from working tree
+    -c, --config <key=value>
+                          set config inside the new repository
     -4, --ipv4            use IPv4 addresses only
-    -6, --ipv6            use IPv6 addresses only
-)raw");
+    -6, --ipv6            use IPv6 addresses only)raw");
 
-    printf("\n");
-    printf("Usage message\n");
+    printf("\nUsage message\n");
     puts(cmd.usage().c_str());
+    puts(cmd.state().c_str());
+
+    printf("\nInternal dump\n");
 
     if (!cmd["v"].exists())
         printf("Optional parameter 'v' missing\n");

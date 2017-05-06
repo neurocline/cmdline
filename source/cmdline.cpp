@@ -6,6 +6,7 @@
 #include "cmdline/cmdline.h"
 
 #include <string.h>
+#include <sstream>
 #include <string>
 
 namespace cmdline
@@ -56,6 +57,56 @@ const cmdline::Value& cmdline::Cmdline::operator[](const char* option)
 		return noValue;
 
 	return *(pos->second);
+}
+
+//=================================================================================================
+
+// Construct state string
+const std::string cmdline::Cmdline::state()
+{
+    std::stringstream buf;
+
+    // argv parts
+    buf << "Argv substrings: (" << argv_parts.size() << ")\n";
+    for (auto& parts : argv_parts)
+        buf << "    " << parts << "\n";
+
+    // positionals
+    buf << "Positional arguments: (" << positionals.size() << ")\n";
+    for (auto& pos : positionals)
+        buf << "    " << pos << "\n";
+
+    // options
+    int used = 0;
+    for (auto& opt : options)
+        if (opt.second->exists())
+            used += 1;
+
+    buf << "Options used: (" << used << ")\n";
+    for (auto& opt : options)
+        if (opt.second->exists())
+            buf << "    " << opt.first << ": " << opt.second->print() << "\n";
+
+    buf << "Options not used: (" << (options.size() - used) << ")\n";
+    for (auto& opt : options)
+        if (!opt.second->exists())
+            buf << "    " << opt.first << ": " << opt.second->print() << "\n";
+
+    std::string rval = buf.str();
+    return rval;
+}
+
+//=================================================================================================
+
+const std::string cmdline::Value::print()
+{
+    std::stringstream buf;
+
+    buf << "{ exist: " << (valid ? "true" : "false");
+    buf << ", nargs: " << num_args;
+    buf << ", str: " << (str == nullptr ? "<null>" : str) << "}";
+
+    return buf.str();
 }
 
 //=================================================================================================

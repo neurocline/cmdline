@@ -1,4 +1,7 @@
+//=================================================================================================
 // cmdline.h
+//  - command-line parser
+//=================================================================================================
 
 #pragma once
 
@@ -24,6 +27,7 @@ public:
     int nargs(int n = -1) { if (n >= 0) num_args = n; return num_args; }
 
     void set(const char* s) { str = s; valid = true; }
+    const std::string print();
 private:
 	const char* str;
     bool valid;
@@ -44,6 +48,9 @@ public:
 
     // usage returns a usage/help string
     const std::string& usage();
+
+    // state returns internal state
+    const std::string state();
 
     void study();
     void eval(int argc, char** argv);
