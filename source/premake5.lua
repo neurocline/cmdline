@@ -1,6 +1,6 @@
 project 'cmdline'
     kind 'StaticLib'
-    
+
     includedirs { '../include' }
 
     files
@@ -14,6 +14,18 @@ project 'cmdline'
     files { '../v0/**' }
     filter { 'files:../v0/**'}
         flags { 'ExcludeFromBuild' }
+    filter {}
+
+    -- include docs
+    files { '../docs/**' }
+    filter { 'files:../docs/**'}
+        flags { 'ExcludeFromBuild' }
+    filter {}
+
+    files { '../README.md' }
+    filter { 'files:../README.md'}
+        flags { 'ExcludeFromBuild' }
+    filter {}
 
     -- for Visual Studio, include the version number in the project name
     filter { 'action:vs*' }

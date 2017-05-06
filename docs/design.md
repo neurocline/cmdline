@@ -4,7 +4,7 @@ Design
 No parameters
 -------------
 
-Basic usage: a command-line that takes no parameters but the body is used as 
+Basic usage: a command-line that takes no parameters but the body is used as
 a help message.
 
 ```c++
@@ -209,3 +209,42 @@ git clone --config user.email=bfitz@blizzard.com
 This is starting to get into esoteric behavior that might not be part of the built-in behavior
 of a command-line parser. But it is a pattern that is used from time to time, so we should
 probably support it.
+
+argparse
+========
+
+For parity with the Python `argparse` library, there are more features to add.
+
+Help text before and after argument help. Shared arguments between parsers. The ability to change the
+opptional argument prefix.  Ability to read arguments from a file. Auto-help argument.
+Allow options to be abbreviated. Sub-parsers.
+
+Argument actions: store, store_const, store_true, store_false, append, append_const, count, plus
+oddballs help and version.
+
+We already implicitly handle store_true vs store. We need to add append for allowing the creation
+of a list. The count action is goofy but we could support it. The store_const and append_const are
+not absolutely necessary. Instead, is there a way to support custom actions? This is the down side
+of a purely textual approach; C++ doesn't have reflection or introspection, so we can't match a
+string in text against a type or function in code; we would need a data structure to support that,
+and now we're back to the original problem that a syntax has to be memorized.
+
+We need to support nargs. Right now we have 0 and 1, but we need "0 or 1" and "0 or more", and
+"1 or more". Technically speaking, we only need "0 or more", because the caller could do any
+further error checking, but we want to balance ease of use.
+
+One thing we probably do need is "remaining", e.g. an argument that gathers up all remaining
+arguments; this is needed if we want to do some kind of child parser that can't be described in
+our syntax.
+
+We need types, again mostly for easy error handling. We can support type conversion easily
+enough, as helpers. Here is where custom type handling comes in handy.
+
+Actually, there is a way to do the introspection in a way that's not too onerous or hard to
+remember. We can have the user supply a map of strings to functors.
+
+We need to support `--` which ends named arguments; everything after must be a positional argument.
+
+We should support parsing from a single string which is the command-line as well as parsing
+an argv array. But the parsing should follow the operating system rules so that code remains
+consistent.
