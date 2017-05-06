@@ -210,6 +210,33 @@ This is starting to get into esoteric behavior that might not be part of the bui
 of a command-line parser. But it is a pattern that is used from time to time, so we should
 probably support it.
 
+Types
+-----
+
+We can allow annotation of parameter names with types as follows:
+
+```
+    -j, --jobs <n:int>      number of submodules cloned in parallel
+    -v, --verbose <:bool>   be more verbose
+    --reference <repo:str>  reference repository
+```
+
+We default to 0-argument options being `bool` and 1-argument options being `str`. The second and
+third options above have redundant type info. We introduce a nameless argument name syntax to
+note that this is a 0-argument option but that it has a type.
+
+We can do lists by adding a `@` suffix to the type (which if mising, is a `str`):
+
+```
+    -c, --config <key=value:@>
+                          set config inside the new repository
+```
+
+This turns the value of the `--config` option into an array. Without `@`, multiple uses of `--config`
+would be an error. Note that if we can work out an acceptable human-readable syntax, this becomes
+documentation in the usage line as well as for generating the parser. This is our goal, that the
+help for the user is also the instructions to the compiler.
+
 argparse
 ========
 
