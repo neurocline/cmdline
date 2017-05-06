@@ -64,6 +64,9 @@ public:
     // This is the ordered list of position arguments
     std::vector<std::string> positionals;
 
+    // This is a list of parameters split out of argv
+    std::vector<std::string> argv_parts;
+
     // This is the default empty value, currently only used when operator[] can't find
     // an entry
 	Value noValue;

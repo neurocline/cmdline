@@ -5,6 +5,7 @@
 
 #include "cmdline/cmdline.h"
 
+#include <string.h>
 #include <string>
 
 namespace cmdline
@@ -84,9 +85,25 @@ void Cmdline::eval(int argc, char** argv)
         // TBD we don't handle --option=value yet
         else
         {
-            char* opt = argv[i];
+            const char* opt = argv[i];
             if (*opt == '-') opt++;
             if (*opt == '-') opt++;
+
+            // If we find a '=' character in the argument, then split it into pieces
+            // (and qq now we need to allocate some strings)
+            const char* eq = strchr(opt, '=');
+            const char* opt_val = nullptr;
+            if (eq != nullptr)
+            {
+                int csize = strlen(opt);
+                int argsize = eq - opt;
+                int valsize = csize - argsize - 1;
+                argv_parts.push_back(std::string(opt, argsize));
+                argv_parts.push_back(std::string(eq + 1, valsize));
+                opt = (argv_parts.end() - 2)->c_str();
+                opt_val = argv_parts.back().c_str();
+            }
+
             auto pos = options.find(opt);
             if (pos == options.end())
                 break; // this is a bad argument
@@ -98,6 +115,12 @@ void Cmdline::eval(int argc, char** argv)
                 int n = pos->second->nargs();
                 for (; n > 0; n--)
                 {
+                    if (opt_val != nullptr)
+                    {
+                        pos->second->set(opt_val);
+                        continue;
+                    }
+
                     i += 1;
                     if (i >= argc)
                         break; // syntax error

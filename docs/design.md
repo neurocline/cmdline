@@ -180,3 +180,32 @@ The equal sign is optional and implied.
 Note that on Windows, arguments are split by whitespace only, so `git-clone j=2` has `argc` of 2,
 whereas `git-clone j 2` has `argc` of 3. Handling of `=` to split parameters has to be handled
 inside the parsing of the `argv` array.
+
+Handling the '=' operator
+-------------------------
+
+Naive command-line argument splitting sees text like `jobs=2` as a single argument token.
+For cases where we know that this is really `jobs`, `=`, `2`, we need to do the splitting
+when we process the `argv` array.
+
+We also only want to do this splitting in specific cases.
+
+At the point where we see that we have a named argument, then it's reasonable to turn `--arg=x`
+into three tokens, and check to see if `arg` is a named argument.
+
+There is a more complicated case where `=` is used to have a key-value pair assigned in a
+named parameter. Again from `git clone`:
+
+```
+    -c, --config <key=value>
+```
+
+The expectation here is that this is used as follows:
+
+```
+git clone --config user.email=bfitz@blizzard.com
+```
+
+This is starting to get into esoteric behavior that might not be part of the built-in behavior
+of a command-line parser. But it is a pattern that is used from time to time, so we should
+probably support it.

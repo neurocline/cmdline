@@ -8,8 +8,8 @@ AUTO_REGISTER(GitClonePartial)
 {
     printf("-------------------------------------------\n");
     printf("GitClone\n");
-	int argc = 5;
-	char* argv[] = { "git-clone", "-v", "-j", "2", "git@github.com:neurocline/cmdline.git" };
+	int argc = 4;
+	char* argv[] = { "git-clone", "-v", "-j=2", "git@github.com:neurocline/cmdline.git" };
     PrintArgs(argc, argv);
 
 	cmdline::Cmdline cmd(argc, argv, R"raw(
